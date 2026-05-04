@@ -7,8 +7,6 @@ import {
   Area,
   BarChart,
   Bar,
-  ScatterChart,
-  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -19,6 +17,7 @@ import {
 import type { DailyMarketSummary, Listing } from "@/lib/db/schema";
 import { enrichListingsWithDealStatus } from "@/lib/market/fair-value";
 import { format, parseISO } from "date-fns";
+import { PriceMileageChart } from "./PriceMileageChart";
 
 interface PriceTrendsProps {
   history: DailyMarketSummary[];
@@ -59,19 +58,6 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   );
 }
 
-type ScatterPayload = { mileage: number; price: number; title?: string; url?: string };
-
-function ScatterTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: ScatterPayload }> }) {
-  if (!active || !payload?.length) return null;
-  const d = payload[0].payload;
-  return (
-    <div className="rounded-lg border border-border bg-white shadow-lg p-3 text-xs">
-      {d.title && <p className="font-semibold text-foreground mb-1">{d.title}</p>}
-      <p className="text-muted-foreground">{d.mileage.toLocaleString()} mi · <span className="text-foreground font-semibold">${d.price.toLocaleString()}</span></p>
-      {d.url && <p className="text-primary mt-1.5 font-medium">Click to open listing →</p>}
-    </div>
-  );
-}
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -108,10 +94,6 @@ export function PriceTrends({ history, activeListings }: PriceTrendsProps) {
     fair:       enriched.filter(l => l.mileage != null && l.askingPrice != null && l.dealStatus === "fair").map(toPoint),
     overpriced: enriched.filter(l => l.mileage != null && l.askingPrice != null && l.dealStatus === "overpriced").map(toPoint),
   };
-
-  function handleDotClick(data: ScatterPayload) {
-    if (data?.url) window.open(data.url, "_blank", "noopener,noreferrer");
-  }
 
   const axisProps = {
     tick: { fontSize: 11, fill: "hsl(215 15% 44%)" },
@@ -179,18 +161,11 @@ export function PriceTrends({ history, activeListings }: PriceTrendsProps) {
 
         {/* Price vs mileage */}
         <ChartCard title="Price vs Mileage">
-          <ResponsiveContainer width="100%" height={220}>
-            <ScatterChart>
-              <CartesianGrid strokeDasharray="2 4" />
-              <XAxis type="number" dataKey="mileage" name="Mileage" tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} {...axisProps} />
-              <YAxis type="number" dataKey="price" name="Price" tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} {...axisProps} />
-              <Tooltip content={<ScatterTooltip />} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-              <Scatter name="Good Deal" data={scatter.good} fill={C.green} opacity={0.8} cursor="pointer" onClick={(d) => handleDotClick(d as ScatterPayload)} />
-              <Scatter name="Fair" data={scatter.fair} fill={C.amber} opacity={0.7} cursor="pointer" onClick={(d) => handleDotClick(d as ScatterPayload)} />
-              <Scatter name="Overpriced" data={scatter.overpriced} fill={C.red} opacity={0.7} cursor="pointer" onClick={(d) => handleDotClick(d as ScatterPayload)} />
-            </ScatterChart>
-          </ResponsiveContainer>
+          <PriceMileageChart
+            good={scatter.good}
+            fair={scatter.fair}
+            overpriced={scatter.overpriced}
+          />
         </ChartCard>
       </div>
     </section>
