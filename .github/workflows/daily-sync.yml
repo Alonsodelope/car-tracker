@@ -1,0 +1,39 @@
+name: Daily Data Sync
+
+on:
+  schedule:
+    # Runs every day at 10:00 AM Eastern Time (14:00 UTC)
+    - cron: "0 14 * * *"
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run daily sync
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SYNC_SECRET_TOKEN: ${{ secrets.SYNC_SECRET_TOKEN }}
+        run: pnpm sync
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "Daily sync failed. Check the logs above."

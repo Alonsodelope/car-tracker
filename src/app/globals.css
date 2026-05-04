@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Light theme ── */
+    --background: 210 17% 97%;
+    --foreground: 222 25% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 25% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 25% 10%;
+    /* BMW M Blue #1c69d3 → hsl(215, 77%, 46%) */
+    --primary: 215 77% 46%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 15% 94%;
+    --secondary-foreground: 222 20% 25%;
+    --muted: 220 15% 95%;
+    --muted-foreground: 215 15% 44%;
+    --accent: 215 77% 46%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 80% 44%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 15% 88%;
+    --input: 220 15% 92%;
+    --ring: 215 77% 46%;
+    --radius: 0.75rem;
+    /* BMW M palette */
+    --m-blue:   215 77% 46%;   /* #1c69d3 */
+    --m-purple: 276 62% 48%;   /* #8b2fc9 */
+    --m-red:    0 100% 40%;    /* #cc0000 */
+    /* Chart palette — darker for light bg */
+    --chart-1: 215 77% 46%;
+    --chart-2: 160 76% 34%;
+    --chart-3: 38 90% 44%;
+    --chart-4: 276 62% 50%;
+    --chart-5: 0 78% 50%;
+    /* Glow */
+    --glow-blue: rgba(28, 105, 211, 0.12);
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Numeric tabular figures */
+  .tabular { font-variant-numeric: tabular-nums; }
+}
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: hsl(var(--background)); }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+
+/* ── Glass utility ─────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+/* ── BMW M tricolor stripe ─────────────────────────────── */
+.m-stripe {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--m-blue))   0%,
+    hsl(var(--m-blue))   33.3%,
+    hsl(var(--m-purple)) 33.3%,
+    hsl(var(--m-purple)) 66.6%,
+    hsl(var(--m-red))    66.6%,
+    hsl(var(--m-red))    100%
+  );
+}
+
+/* ── Stat card ─────────────────────────────────────────── */
+.stat-card {
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.18s;
+}
+.stat-card:hover {
+  border-color: hsl(215 77% 46% / 0.35);
+  box-shadow: 0 4px 20px rgba(28, 105, 211, 0.09), 0 1px 4px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
+/* ── Table row hover ───────────────────────────────────── */
+.table-row-hover { transition: background-color 0.12s; }
+.table-row-hover:hover {
+  background: rgba(28, 105, 211, 0.04);
+  box-shadow: inset 3px 0 0 hsl(var(--m-blue));
+}
+
+/* ── External link button ──────────────────────────────── */
+.ext-link-btn {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+tr:hover .ext-link-btn { opacity: 1; }
+
+/* ── Recharts light-theme overrides ───────────────────── */
+.recharts-default-tooltip {
+  background: white !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+  color: hsl(var(--foreground)) !important;
+}
+.recharts-cartesian-grid line { stroke: hsl(var(--border)) !important; }
+.recharts-text { fill: hsl(var(--muted-foreground)) !important; }
+.recharts-legend-item-text { color: hsl(var(--muted-foreground)) !important; }
+
+/* ── Gradient text ─────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--foreground)) 0%,
+    hsl(var(--m-blue))     55%,
+    hsl(var(--m-purple))   100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Pulse dot ─────────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+.live-dot { animation: pulse-dot 2s ease-in-out infinite; }
