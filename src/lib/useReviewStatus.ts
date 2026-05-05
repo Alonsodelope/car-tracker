@@ -4,40 +4,43 @@ import { useState, useCallback, useEffect } from "react";
 
 export type ReviewStatus = "good" | "bad" | null;
 
-const STORAGE_KEY = "listing-reviews-v1";
+export function useReviewStatus(vehicleKey: string) {
+  const [reviews, setReviews] = useState<Record<number, ReviewStatus>>({});
+  const [loading, setLoading] = useState(true);
 
-function load(): Record<string, ReviewStatus> {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
-  } catch {
-    return {};
-  }
-}
-
-export function useReviewStatus() {
-  const [reviews, setReviews] = useState<Record<string, ReviewStatus>>({});
-
+  // Load all reviews for this vehicle from the DB on mount
   useEffect(() => {
-    setReviews(load());
-  }, []);
+    fetch(`/api/reviews?vehicleKey=${encodeURIComponent(vehicleKey)}`)
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        const parsed: Record<number, ReviewStatus> = {};
+        for (const [k, v] of Object.entries(data)) {
+          parsed[Number(k)] = v as ReviewStatus;
+        }
+        setReviews(parsed);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [vehicleKey]);
 
-  const setReview = useCallback((key: string, status: ReviewStatus) => {
+  const toggle = useCallback((listingId: number, status: "good" | "bad") => {
     setReviews((prev) => {
-      const next = { ...prev, [key]: status };
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
-      return next;
+      const current = prev[listingId];
+      const next = current === status ? null : status;
+
+      // Optimistic update — save to DB in background
+      fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId, review: next }),
+      }).catch(() => {
+        // Revert on failure
+        setReviews((r) => ({ ...r, [listingId]: current }));
+      });
+
+      return { ...prev, [listingId]: next };
     });
   }, []);
 
-  const toggle = useCallback((key: string, status: "good" | "bad") => {
-    setReviews((prev) => {
-      const current = prev[key];
-      const next = { ...prev, [key]: current === status ? null : status };
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
-      return next;
-    });
-  }, []);
-
-  return { reviews, setReview, toggle };
+  return { reviews, toggle, loading };
 }

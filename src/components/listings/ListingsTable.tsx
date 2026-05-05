@@ -78,7 +78,7 @@ export function ListingsTable({
   const [filterStatus, setFilterStatus] = useState<"active" | "all">("active");
   const [filterTransmission, setFilterTransmission] = useState<TransmissionType | "all">("all");
 
-  const { reviews, toggle } = useReviewStatus();
+  const { reviews, toggle } = useReviewStatus(vehicleKey);
 
   const todayStr = today ?? format(new Date(), "yyyy-MM-dd");
   const enriched = useMemo(() => enrichListingsWithDealStatus(listings), [listings]);
@@ -210,8 +210,8 @@ export function ListingsTable({
                 </tr>
               )}
               {sorted.map((l) => {
-                const reviewKey = String(l.id ?? l.url);
-                const review = reviews[reviewKey] ?? null;
+                const reviewKey = l.id;
+                const review = reviews[l.id] ?? null;
                 const isBad = review === "bad";
                 const isGood = review === "good";
 
@@ -285,7 +285,7 @@ export function ListingsTable({
                     <td className={td}>
                       <div className="flex items-center gap-1">
                         <button
-                          onClick={() => toggle(reviewKey, "good")}
+                          onClick={() => toggle(l.id, "good")}
                           title="Good option"
                           className={`text-base leading-none px-1.5 py-1 rounded transition-all ${
                             isGood
@@ -296,7 +296,7 @@ export function ListingsTable({
                           👍
                         </button>
                         <button
-                          onClick={() => toggle(reviewKey, "bad")}
+                          onClick={() => toggle(l.id, "bad")}
                           title="Not interested"
                           className={`text-base leading-none px-1.5 py-1 rounded transition-all ${
                             isBad

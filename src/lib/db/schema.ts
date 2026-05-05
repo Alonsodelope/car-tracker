@@ -48,6 +48,8 @@ export const listings = pgTable("listings", {
   phone: text("phone"),
   /** Source-reported transmission type, normalised to "manual" | "automatic" | null */
   transmission: text("transmission"),
+  /** User review: "good" | "bad" | null */
+  review: text("review"),
   vehicleKey: text("vehicle_key").notNull().default("bmw-m2"), // e.g. "bmw-m2" | "ford-bronco-fe"
   status: text("status").default("active").notNull(), // 'active' | 'removed'
   firstSeenAt: timestamp("first_seen_at").defaultNow().notNull(),
