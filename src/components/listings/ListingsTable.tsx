@@ -226,7 +226,7 @@ export function ListingsTable({
                     {/* Source */}
                     <td className={td}>
                       <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
-                        {sourceNames[l.sourceId] === "cars.com" ? "Cars.com" : sourceNames[l.sourceId] === "autotrader" ? "AutoTrdr" : sourceNames[l.sourceId] ?? "–"}
+                        {sourceNames[l.sourceId] === "cars.com" ? "Cars.com" : sourceNames[l.sourceId] === "autotrader" ? "AutoTrdr" : sourceNames[l.sourceId] === "bringatrailer" ? "BaT" : sourceNames[l.sourceId] ?? "–"}
                       </Badge>
                     </td>
 
