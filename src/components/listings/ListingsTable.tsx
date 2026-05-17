@@ -107,7 +107,7 @@ export function ListingsTable({
       if (filterTransmission !== "all" && l.transmission !== filterTransmission) return false;
       if (floridaOnly && !l.isFL) return false;
       if (filterGoodOnly && l.dealStatus !== "good") return false;
-      if (bestDealsOnly && !l.isBestDeal) return false;
+      if (bestDealsOnly && vehicleKey === "bmw-m2" && !l.isBestDeal) return false;
       return true;
     }), [withMeta, filterStatus, filterSource, filterYear, filterTransmission, floridaOnly, filterGoodOnly, bestDealsOnly, sourceNames]);
 

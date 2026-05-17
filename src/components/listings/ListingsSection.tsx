@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { PriceTrends } from "@/components/dashboard/PriceTrends";
 import { ListingsTable } from "@/components/listings/ListingsTable";
 import type { Listing, DailyMarketSummary } from "@/lib/db/schema";
@@ -23,6 +23,10 @@ export function ListingsSection({ allListings, summaryHistory, sourceNames, toda
   const [floridaOnly, setFloridaOnly] = useState(false);
   const [bestDealsOnly, setBestDealsOnly] = useState(false);
 
+  useEffect(() => {
+    if (vehicleKey !== "bmw-m2") setBestDealsOnly(false);
+  }, [vehicleKey]);
+
   const activeListings = useMemo(
     () => allListings.filter((l) => l.status === "active"),
     [allListings]
@@ -36,7 +40,7 @@ export function ListingsSection({ allListings, summaryHistory, sourceNames, toda
 
   return (
     <>
-      <PriceTrends history={summaryHistory} activeListings={filteredActiveListings} />
+      <PriceTrends history={summaryHistory} activeListings={filteredActiveListings} vehicleKey={vehicleKey} />
       <ListingsTable
         listings={allListings}
         sourceNames={sourceNames}

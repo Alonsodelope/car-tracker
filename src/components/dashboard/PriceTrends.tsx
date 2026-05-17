@@ -22,6 +22,7 @@ import { PriceMileageChart } from "./PriceMileageChart";
 interface PriceTrendsProps {
   history: DailyMarketSummary[];
   activeListings: Listing[];
+  vehicleKey: string;
 }
 
 function fmtDate(s: string) {
@@ -70,7 +71,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-export function PriceTrends({ history, activeListings }: PriceTrendsProps) {
+export function PriceTrends({ history, activeListings, vehicleKey }: PriceTrendsProps) {
   const sorted = [...history]
     .sort((a, b) => a.summaryDate.localeCompare(b.summaryDate))
     .map((d) => ({
@@ -84,6 +85,7 @@ export function PriceTrends({ history, activeListings }: PriceTrendsProps) {
 
   const enriched = enrichListingsWithDealStatus(activeListings);
   const toPoint = (l: typeof enriched[number]) => ({
+    id: l.id,
     mileage: l.mileage!,
     price: l.askingPrice!,
     title: l.title ?? undefined,
@@ -165,6 +167,7 @@ export function PriceTrends({ history, activeListings }: PriceTrendsProps) {
             good={scatter.good}
             fair={scatter.fair}
             overpriced={scatter.overpriced}
+            vehicleKey={vehicleKey}
           />
         </ChartCard>
       </div>

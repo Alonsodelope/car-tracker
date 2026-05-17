@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ExternalLink, X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { useReviewStatus } from "@/lib/useReviewStatus";
 
 interface Point {
+  id: number;
   mileage: number;
   price: number;
   title?: string;
@@ -14,6 +16,7 @@ interface Props {
   good: Point[];
   fair: Point[];
   overpriced: Point[];
+  vehicleKey: string;
 }
 
 type Category = "good" | "fair" | "overpriced";
@@ -30,7 +33,7 @@ const LABELS: Record<Category, string> = {
 };
 const CATEGORIES: Category[] = ["good", "fair", "overpriced"];
 
-const M = { top: 12, right: 16, bottom: 44, left: 52 }; // margins
+const M = { top: 12, right: 16, bottom: 44, left: 52 };
 
 interface ZoomState { x: number; y: number; k: number }
 
@@ -42,7 +45,7 @@ function niceStep(range: number): number {
   return 10 * mag;
 }
 
-export function PriceMileageChart({ good, fair, overpriced }: Props) {
+export function PriceMileageChart({ good, fair, overpriced, vehicleKey }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [w, setW] = useState(360);
@@ -51,12 +54,12 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
   const [visible, setVisible] = useState<Record<Category, boolean>>({ good: true, fair: true, overpriced: true });
   const [popup, setPopup] = useState<(Point & { cat: Category; px: number; py: number }) | null>(null);
 
-  // Track touch/drag state
+  const { reviews, toggle } = useReviewStatus(vehicleKey);
+
   const drag = useRef<{ active: boolean; lastX: number; lastY: number; lastDist: number | null; moved: boolean }>({
     active: false, lastX: 0, lastY: 0, lastDist: null, moved: false,
   });
 
-  // Measure container
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -77,11 +80,9 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
   const pMin = Math.min(...all.map(p => p.price), 40000) * 0.97;
   const pMax = Math.max(...all.map(p => p.price), 80000) * 1.03;
 
-  // Base chart coords (before zoom)
   const bx = (m: number) => (m / mMax) * cw;
   const by = (p: number) => ch * (1 - (p - pMin) / (pMax - pMin));
 
-  // Screen coords inside chart area (after zoom)
   const sx = (m: number) => bx(m) * zoom.k + zoom.x;
   const sy = (p: number) => by(p) * zoom.k + zoom.y;
 
@@ -92,7 +93,6 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
     return { x, y, k };
   }, [cw, ch]);
 
-  // Zoom toward a point in chart-local coords
   const zoomAt = useCallback((factor: number, cx_: number, cy_: number) => {
     setZoom(prev => {
       const k2 = prev.k * factor;
@@ -102,7 +102,6 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
     });
   }, [clamp]);
 
-  // Mouse wheel
   function onWheel(e: React.WheelEvent<SVGSVGElement>) {
     e.preventDefault();
     const rect = svgRef.current!.getBoundingClientRect();
@@ -111,7 +110,6 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
     zoomAt(e.deltaY < 0 ? 1.25 : 0.8, cx_, cy_);
   }
 
-  // Touch handlers
   function onTouchStart(e: React.TouchEvent) {
     drag.current.moved = false;
     if (e.touches.length === 1) {
@@ -164,7 +162,6 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
     drag.current.lastDist = null;
   }
 
-  // Mouse drag for desktop
   function onMouseDown(e: React.MouseEvent) {
     drag.current.active = true;
     drag.current.moved = false;
@@ -184,7 +181,6 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
   }
   function onMouseUp() { drag.current.active = false; }
 
-  // Axis ticks based on visible data range
   const visMinM = Math.max(0, (-zoom.x / zoom.k) * mMax / cw);
   const visMaxM = Math.min(mMax, ((cw - zoom.x) / zoom.k) * mMax / cw);
   const visMinP = pMin + (1 - (ch - zoom.y) / zoom.k / ch) * (pMax - pMin);
@@ -199,6 +195,9 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
 
   const data: Record<Category, Point[]> = { good, fair, overpriced };
   const isZoomed = zoom.k > 1.05;
+
+  // Keep popup in sync when review changes
+  const popupReview = popup ? (reviews[popup.id] ?? null) : null;
 
   return (
     <div ref={containerRef} className="relative" style={{ userSelect: "none" }}>
@@ -290,6 +289,12 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
               visible[cat] && data[cat].map((p, i) => {
                 const cx_ = sx(p.mileage);
                 const cy_ = sy(p.price);
+                const review = reviews[p.id] ?? null;
+                const isBad = review === "bad";
+                const isGood = review === "good";
+                const dotColor = isBad ? "#9ca3af" : COLORS[cat];
+                const dotOpacity = isBad ? 0.35 : 0.85;
+                const dotRadius = isGood ? 7 : 6;
                 return (
                   <g key={`${cat}-${i}`}>
                     {/* Large invisible touch/click target */}
@@ -314,13 +319,24 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
                     />
                     {/* Visible dot */}
                     <circle
-                      cx={cx_} cy={cy_} r={6}
-                      fill={COLORS[cat]}
-                      stroke="white"
-                      strokeWidth={1.5}
-                      opacity={0.85}
+                      cx={cx_} cy={cy_} r={dotRadius}
+                      fill={dotColor}
+                      stroke={isGood ? "white" : "white"}
+                      strokeWidth={isGood ? 2 : 1.5}
+                      opacity={dotOpacity}
                       style={{ pointerEvents: "none" }}
                     />
+                    {/* Good ring indicator */}
+                    {isGood && (
+                      <circle
+                        cx={cx_} cy={cy_} r={10}
+                        fill="none"
+                        stroke={COLORS[cat]}
+                        strokeWidth={1.5}
+                        opacity={0.4}
+                        style={{ pointerEvents: "none" }}
+                      />
+                    )}
                   </g>
                 );
               })
@@ -368,8 +384,8 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
 
       {/* Popup card */}
       {popup && (() => {
-        const pw = 230;
-        const ph = 130;
+        const pw = 250;
+        const ph = 160;
         const contW = containerRef.current?.getBoundingClientRect().width ?? w;
         const contH = containerRef.current?.getBoundingClientRect().height ?? h;
         let left = popup.px - pw / 2;
@@ -378,6 +394,8 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
         if (left + pw > contW - 4) left = contW - pw - 4;
         if (top < 4) top = popup.py + 18;
         if (top + ph > contH) top = popup.py - ph - 14;
+        const isGood = popupReview === "good";
+        const isBad = popupReview === "bad";
         return (
           <div
             className="absolute z-30 bg-white rounded-2xl border border-border shadow-2xl p-4"
@@ -404,18 +422,40 @@ export function PriceMileageChart({ good, fair, overpriced }: Props) {
               <span className="text-base font-black text-foreground">${popup.price.toLocaleString()}</span>
               <span className="text-xs text-muted-foreground">{popup.mileage.toLocaleString()} mi</span>
             </div>
-            {popup.url && (
-              <a
-                href={popup.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 active:opacity-80"
-                style={{ backgroundColor: COLORS[popup.cat] }}
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                Open Listing
-              </a>
-            )}
+
+            {/* Review buttons + open link */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => toggle(popup.id, "good")}
+                title="Good option"
+                className={`flex-shrink-0 text-lg leading-none px-2 py-1.5 rounded-lg transition-all active:scale-95 ${
+                  isGood
+                    ? "bg-emerald-100 ring-1 ring-emerald-400 scale-110"
+                    : "bg-gray-50 opacity-50 hover:opacity-90"
+                }`}
+              >👍</button>
+              <button
+                onClick={() => toggle(popup.id, "bad")}
+                title="Not interested"
+                className={`flex-shrink-0 text-lg leading-none px-2 py-1.5 rounded-lg transition-all active:scale-95 ${
+                  isBad
+                    ? "bg-red-100 ring-1 ring-red-400 scale-110"
+                    : "bg-gray-50 opacity-50 hover:opacity-90"
+                }`}
+              >👎</button>
+              {popup.url && (
+                <a
+                  href={popup.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-white transition-opacity hover:opacity-90 active:opacity-80"
+                  style={{ backgroundColor: COLORS[popup.cat] }}
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Open
+                </a>
+              )}
+            </div>
           </div>
         );
       })()}
