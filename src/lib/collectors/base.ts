@@ -113,7 +113,7 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     model: "sl-class",
     makeDisplay: "Mercedes-Benz",
     modelDisplay: "SL-Class",
-    yearMin: 1993,
+    yearMin: 1994,
     yearMax: 2002,
     stockType: "used",
     // Narrows to the 6.0L V12 (SL 600 / 600 SL) only.
