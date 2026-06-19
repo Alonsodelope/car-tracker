@@ -166,12 +166,16 @@ export class AutotraderCollector implements CollectorAdapter {
     const id = item.id as number | undefined;
     if (!id) return null;
 
-    // Model check — ensure the listing is for the correct model
+    // Model check — ensure the listing is for the correct model.
+    // modelCode has non-alphanumeric chars stripped (e.g. "SL-Class" → "SLCLASS"),
+    // so we strip the filter the same way before comparing against modelCode.
+    // modelName retains original formatting, so we compare the unstripped filter there.
     const modelObj = item.model as { name?: string; code?: string } | undefined;
     const modelCode = (modelObj?.code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
     const modelName = (modelObj?.name ?? "").toUpperCase();
     const modelFilter = (this.profile.modelCodeFilter ?? this.profile.model).toUpperCase();
-    if (!modelCode.includes(modelFilter) && !modelName.includes(modelFilter)) return null;
+    const modelFilterStripped = modelFilter.replace(/[^A-Z0-9]/g, "");
+    if (!modelCode.includes(modelFilterStripped) && !modelName.includes(modelFilter)) return null;
 
     const pricingDetail = item.pricingDetail as
       | { salePrice?: number; price?: number; msrp?: number }
