@@ -116,7 +116,6 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     yearMin: 1994,
     yearMax: 2002,
     stockType: "used",
-    trimFilter: "600",
     modelCodeFilter: "SL",
     carsComMake: "mercedes_benz",
     carsComModel: "sl_class",
