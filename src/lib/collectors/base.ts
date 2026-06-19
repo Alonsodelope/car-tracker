@@ -30,6 +30,17 @@ export interface VehicleProfile {
    * Defaults to model.toUpperCase() if omitted.
    */
   modelCodeFilter?: string;
+  /**
+   * Cars.com uses underscores for multi-word makes (e.g. "mercedes_benz").
+   * If omitted, falls back to `make`. Single-word makes (bmw, ford, porsche)
+   * don't need this.
+   */
+  carsComMake?: string;
+  /**
+   * Cars.com model slug if it differs from `model`
+   * (e.g. "sl_class" instead of "sl-class").
+   */
+  carsComModel?: string;
 }
 
 export const VEHICLE_PROFILES: VehicleProfile[] = [
@@ -108,9 +119,12 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     // Narrows to the 6.0L V12 (SL 600 / 600 SL) only.
     // Year cap to 2002 excludes the R230 generation (2003+).
     trimFilter: "600",
-    // Autotrader/Cars.com filter — "SL-Class" appears in model fields on both platforms.
-    // BaT coverage is partial: titles written "SL600" (no space) won't match the
-    // word-boundary regex, but "SL 600" and "600 SL" format titles will.
+    // Autotrader uses hyphens in URL path (/mercedes-benz/sl-class/) — handled by make/model.
+    // Cars.com uses underscores (makes[]=mercedes_benz&models[]=mercedes_benz-sl_class).
+    carsComMake: "mercedes_benz",
+    carsComModel: "sl_class",
+    // BaT coverage is partial: "SL600" (no space) won't match word-boundary regex
+    // but "SL 600" and "600 SL" format titles will.
     modelCodeFilter: "SL-Class",
   },
 ];

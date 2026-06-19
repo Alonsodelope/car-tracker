@@ -22,11 +22,12 @@ const FETCH_HEADERS = {
 };
 
 function buildBaseUrl(profile: VehicleProfile): string {
-  // Cars.com model slug format: {make}-{model}
-  const modelSlug = `${profile.make}-${profile.model}`;
+  const carsComMake = profile.carsComMake ?? profile.make;
+  const carsComModel = profile.carsComModel ?? profile.model;
+  const modelSlug = `${carsComMake}-${carsComModel}`;
   let url =
     "https://www.cars.com/shopping/results/" +
-    `?makes[]=${profile.make}` +
+    `?makes[]=${carsComMake}` +
     `&models[]=${modelSlug}` +
     `&year_min=${profile.yearMin}` +
     `&year_max=${profile.yearMax}` +
