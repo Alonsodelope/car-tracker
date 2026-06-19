@@ -107,25 +107,19 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
   },
   {
     key: "mercedes-sl600-r129",
-    displayName: "Mercedes-Benz SL 600 R129",
-    shortName: "SL 600 R129",
+    displayName: "Mercedes-Benz SL 600",
+    shortName: "SL 600",
     make: "mercedes-benz",
     model: "sl-class",
     makeDisplay: "Mercedes-Benz",
-    modelDisplay: "SL-Class",
+    modelDisplay: "SL 600",
     yearMin: 1994,
     yearMax: 2002,
     stockType: "used",
-    // Narrows to the 6.0L V12 (SL 600 / 600 SL) only.
-    // Year cap to 2002 excludes the R230 generation (2003+).
     trimFilter: "600",
-    // Autotrader uses hyphens in URL path (/mercedes-benz/sl-class/) — handled by make/model.
-    // Cars.com uses underscores (makes[]=mercedes_benz&models[]=mercedes_benz-sl_class).
+    modelCodeFilter: "SL",
     carsComMake: "mercedes_benz",
     carsComModel: "sl_class",
-    // BaT coverage is partial: "SL600" (no space) won't match word-boundary regex
-    // but "SL 600" and "600 SL" format titles will.
-    modelCodeFilter: "SL-Class",
   },
 ];
 
