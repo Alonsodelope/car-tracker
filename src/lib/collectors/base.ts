@@ -77,6 +77,42 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     // Explicit model code to avoid Autotrader matching other Porsche models
     modelCodeFilter: "911",
   },
+  {
+    key: "porsche-997-carrera-s",
+    displayName: "Porsche 911 Carrera S (997.1)",
+    shortName: "997.1 CS",
+    make: "porsche",
+    model: "911",
+    makeDisplay: "Porsche",
+    modelDisplay: "911",
+    yearMin: 2005,
+    yearMax: 2008,
+    stockType: "used",
+    // "carrera s" is NOT a substring of "carrera 4s" (the "4" breaks the match),
+    // so Carrera 4S (AWD) listings are naturally excluded. Tiptronic can't be
+    // excluded via trimFilter — mark those 👎 manually.
+    trimFilter: "carrera s",
+    modelCodeFilter: "911",
+  },
+  {
+    key: "mercedes-sl600-r129",
+    displayName: "Mercedes-Benz SL 600 R129",
+    shortName: "SL 600 R129",
+    make: "mercedes-benz",
+    model: "sl-class",
+    makeDisplay: "Mercedes-Benz",
+    modelDisplay: "SL-Class",
+    yearMin: 1993,
+    yearMax: 2002,
+    stockType: "used",
+    // Narrows to the 6.0L V12 (SL 600 / 600 SL) only.
+    // Year cap to 2002 excludes the R230 generation (2003+).
+    trimFilter: "600",
+    // Autotrader/Cars.com filter — "SL-Class" appears in model fields on both platforms.
+    // BaT coverage is partial: titles written "SL600" (no space) won't match the
+    // word-boundary regex, but "SL 600" and "600 SL" format titles will.
+    modelCodeFilter: "SL-Class",
+  },
 ];
 
 /** Look up a profile by key; defaults to the first profile if not found */
