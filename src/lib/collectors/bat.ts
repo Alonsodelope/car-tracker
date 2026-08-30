@@ -171,6 +171,14 @@ export class BATCollector implements CollectorAdapter {
       }
     }
 
+    // Exclude keywords: reject a body style/variant the profile explicitly
+    // doesn't want, even if the trim filter above matched.
+    if (this.profile.excludeKeywords?.length) {
+      if (this.profile.excludeKeywords.some((kw) => matchesTrimFilter(kw, undefined, item.title))) {
+        return false;
+      }
+    }
+
     // Price cap
     if (this.profile.maxPrice && item.current_bid > this.profile.maxPrice) {
       return false;

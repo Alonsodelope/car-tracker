@@ -41,6 +41,13 @@ export interface VehicleProfile {
    * (e.g. "sl_class" instead of "sl-class").
    */
   carsComModel?: string;
+  /**
+   * If set, listings whose trim/title contains ANY of these strings
+   * (case-insensitive) are rejected, even if trimFilter otherwise matches.
+   * Used to keep a body-style-specific profile from picking up a
+   * differently-bodied variant sharing the same trim name.
+   */
+  excludeKeywords?: string[];
 }
 
 export const VEHICLE_PROFILES: VehicleProfile[] = [
@@ -138,6 +145,10 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     // C-Class it's "C", not "C-CLASS". Without this override every listing
     // was rejected by the model check before the trim filter even ran.
     modelCodeFilter: "C",
+    // Sedan (4-door) only — the current W206 C-Class has no coupe/cabriolet
+    // (that body moved to the separate CLE line), but reject them defensively
+    // in case a listing is mistitled or a future gen brings one back.
+    excludeKeywords: ["coupe", "cabriolet", "convertible", "wagon", "estate"],
     carsComMake: "mercedes_benz",
     carsComModel: "c_class",
   },

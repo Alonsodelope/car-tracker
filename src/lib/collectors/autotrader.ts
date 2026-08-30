@@ -198,6 +198,16 @@ export class AutotraderCollector implements CollectorAdapter {
       }
     }
 
+    // Exclude keywords: reject a body style/variant the profile explicitly
+    // doesn't want, even if the trim filter above matched.
+    if (this.profile.excludeKeywords?.length) {
+      const titleLong = typeof item.titleLong === "string" ? item.titleLong : undefined;
+      const titleShort = typeof item.title === "string" ? item.title : undefined;
+      if (this.profile.excludeKeywords.some((kw) => matchesTrimFilter(kw, trim, titleLong ?? titleShort))) {
+        return null;
+      }
+    }
+
     const title =
       typeof item.titleLong === "string"
         ? item.titleLong

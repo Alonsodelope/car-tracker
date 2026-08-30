@@ -187,6 +187,15 @@ export class CarsComCollector implements CollectorAdapter {
       }
     }
 
+    // Exclude keywords: reject a body style/variant the profile explicitly
+    // doesn't want, even if the trim filter above matched.
+    if (this.profile.excludeKeywords?.length) {
+      const titleStr = `${year ?? ""} ${this.profile.makeDisplay} ${this.profile.modelDisplay}${trim ? " " + trim : ""}`.trim();
+      if (this.profile.excludeKeywords.some((kw) => matchesTrimFilter(kw, trim, titleStr))) {
+        return null;
+      }
+    }
+
     const imageUrl =
       typeof payload.primaryThumbnail === "string" ? payload.primaryThumbnail : undefined;
 
