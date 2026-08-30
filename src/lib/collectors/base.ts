@@ -133,6 +133,11 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     stockType: "used",
     // Matches "AMG C 63 S ..." trims, excludes regular C300/C300 4MATIC etc.
     trimFilter: "c 63",
+    // Autotrader's model.code for Mercedes lines is the short series letter
+    // (see SL 600 above, which needed "SL" instead of "SL-CLASS") — for
+    // C-Class it's "C", not "C-CLASS". Without this override every listing
+    // was rejected by the model check before the trim filter even ran.
+    modelCodeFilter: "C",
     carsComMake: "mercedes_benz",
     carsComModel: "c_class",
   },
