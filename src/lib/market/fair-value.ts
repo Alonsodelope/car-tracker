@@ -1,6 +1,25 @@
 import type { Listing } from "../db/schema";
 import type { DealStatus } from "@/types";
 
+// ─── Staleness cutoff ─────────────────────────────────────────────────────────
+// Listings backdated (via source-reported "days on market") past this many
+// days are treated as stale/unreliable data rather than genuine long-sitting
+// inventory, and are auto-removed by the daily sync (see
+// removeStaleListings in lib/sync/daily-sync.ts). They still exist in the DB
+// with status "removed" — visible via the "Show All" listings toggle — they
+// just no longer count as active.
+
+export const MAX_DAYS_ON_MARKET = 199;
+
+export function isStaleListing(
+  firstSeenAt: Date | string,
+  referenceDate: Date = new Date()
+): boolean {
+  const first = typeof firstSeenAt === "string" ? new Date(firstSeenAt) : firstSeenAt;
+  const ageDays = (referenceDate.getTime() - first.getTime()) / (24 * 60 * 60 * 1000);
+  return ageDays > MAX_DAYS_ON_MARKET;
+}
+
 // ─── Good deal threshold ──────────────────────────────────────────────────────
 // Good deal  = price is ≥8% BELOW fair value
 // Fair deal  = price is within ±8% of fair value

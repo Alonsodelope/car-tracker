@@ -7,13 +7,14 @@ import {
   priceChanges,
   sources,
 } from "../db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, lt, sql } from "drizzle-orm";
 import { CarsComCollector } from "../collectors/cars-com";
 import { AutotraderCollector } from "../collectors/autotrader";
 import { BATCollector } from "../collectors/bat";
 import { VisorCollector } from "../collectors/visor";
 import { VEHICLE_PROFILES, VehicleProfile } from "../collectors/base";
 import type { CollectorAdapter, ScrapedListing } from "../collectors/base";
+import { MAX_DAYS_ON_MARKET } from "../market/fair-value";
 import { format } from "date-fns";
 import type { SyncResult } from "@/types";
 
@@ -37,6 +38,10 @@ function buildCollectors(profile: VehicleProfile): CollectorAdapter[] {
 export async function runDailySync(): Promise<SyncResult[]> {
   const today = format(new Date(), "yyyy-MM-dd");
   console.log(`\n═══ Daily Sync — ${today} ═══\n`);
+
+  // Run before anything else so today's market summaries (computed per
+  // vehicle below) already reflect the cleaned-up active set.
+  await removeStaleListings(today);
 
   const results: SyncResult[] = [];
 
@@ -266,6 +271,52 @@ async function syncSource(
     errors,
     durationMs: Date.now() - start,
   };
+}
+
+// ─── Stale listing cleanup ────────────────────────────────────────────────────
+
+/**
+ * Marks any active listing whose (backdated) firstSeenAt is older than
+ * MAX_DAYS_ON_MARKET as removed, across all vehicles/sources. This guards
+ * against unreliable "days on market" data from sources (notably Visor,
+ * which has reported values in the hundreds — almost certainly re-listed
+ * inventory or bad source data rather than a car that's genuinely been
+ * sitting unsold that long) cluttering the active listings view.
+ *
+ * Rows are marked "removed", not deleted — they remain visible via the
+ * "Show All" listings toggle for historical reference, consistent with how
+ * every other removal in this file works.
+ */
+async function removeStaleListings(today: string): Promise<number> {
+  const cutoff = new Date(Date.now() - MAX_DAYS_ON_MARKET * 24 * 60 * 60 * 1000);
+
+  const staleRows = await db
+    .select({ id: listings.id, askingPrice: listings.askingPrice })
+    .from(listings)
+    .where(and(eq(listings.status, "active"), lt(listings.firstSeenAt, cutoff)));
+
+  for (const row of staleRows) {
+    await db
+      .update(listings)
+      .set({ status: "removed", lastSeenAt: new Date(), updatedAt: new Date() })
+      .where(eq(listings.id, row.id));
+
+    await db
+      .insert(listingSnapshots)
+      .values({
+        listingId: row.id,
+        snapshotDate: today,
+        askingPrice: row.askingPrice,
+        status: "removed",
+      })
+      .onConflictDoNothing();
+  }
+
+  if (staleRows.length > 0) {
+    console.log(`[sync] Removed ${staleRows.length} listing(s) over ${MAX_DAYS_ON_MARKET} days on market`);
+  }
+
+  return staleRows.length;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
