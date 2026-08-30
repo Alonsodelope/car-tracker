@@ -3,7 +3,6 @@ import { dailyMarketSummary, sources, listings } from "@/lib/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import { Badge } from "@/components/ui/badge";
 import { SyncButton } from "./SyncButton";
-import { CleanupButton } from "./CleanupButton";
 import { VEHICLE_PROFILES } from "@/lib/collectors/base";
 import { format } from "date-fns";
 
@@ -56,7 +55,6 @@ export default async function AdminPage() {
           <p className="text-xs text-muted-foreground/60 mt-3">
             Sync runs in the background and may take 3–10 minutes. Refresh the dashboard afterward.
           </p>
-          <CleanupButton />
         </div>
       </div>
 
