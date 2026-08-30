@@ -173,7 +173,11 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     makeDisplay: "Mercedes-Benz",
     modelDisplay: "C 63 AMG S",
     yearMin: 2024,
-    yearMax: 2026,
+    // Capped at 2025 at the user's request — 2026 listings (mostly Visor)
+    // were disproportionately the ones with the longest, most suspect
+    // "days on market" values (allocation/pre-order-style dealer postings
+    // rather than genuine used inventory).
+    yearMax: 2025,
     stockType: "used",
     // Matches "AMG C 63 S ..." trims, excludes regular C300/C300 4MATIC etc.
     // Kept as a safety net now that the URL itself is already scoped to C63.
