@@ -120,6 +120,22 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     carsComMake: "mercedes_benz",
     carsComModel: "sl_class",
   },
+  {
+    key: "mercedes-c63s-w206",
+    displayName: "Mercedes-AMG C 63 S E Performance",
+    shortName: "AMG C63 S",
+    make: "mercedes-benz",
+    model: "c-class",
+    makeDisplay: "Mercedes-Benz",
+    modelDisplay: "C 63 AMG S",
+    yearMin: 2024,
+    yearMax: 2025,
+    stockType: "used",
+    // Matches "AMG C 63 S ..." trims, excludes regular C300/C300 4MATIC etc.
+    trimFilter: "c 63",
+    carsComMake: "mercedes_benz",
+    carsComModel: "c_class",
+  },
 ];
 
 /** Look up a profile by key; defaults to the first profile if not found */
