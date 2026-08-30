@@ -1,46 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { triggerSync } from "./actions";
 
 export function SyncButton() {
+  const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [message, setMessage] = useState("");
 
-  async function handleSync() {
+  function handleSync() {
     setStatus("loading");
     setMessage("");
-    try {
-      const res = await fetch("/api/sync", {
-        method: "POST",
-        headers: {
-          "x-sync-token": process.env.NEXT_PUBLIC_SYNC_TOKEN ?? "dev-secret-token",
-        },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setStatus("success");
-        setMessage(data.message ?? "Sync started!");
-      } else {
+    startTransition(async () => {
+      try {
+        const result = await triggerSync();
+        if (result.ok) {
+          setStatus("success");
+          const total = result.results?.reduce((sum, r) => sum + r.newListings, 0) ?? 0;
+          setMessage(`Sync complete — +${total} new listings. Refresh to see updates.`);
+        } else {
+          setStatus("error");
+          setMessage(result.error ?? "Sync failed");
+        }
+      } catch (err) {
         setStatus("error");
-        setMessage(data.error ?? "Sync failed");
+        setMessage(String(err));
       }
-    } catch (err) {
-      setStatus("error");
-      setMessage(String(err));
-    }
+    });
   }
+
+  const loading = isPending || status === "loading";
 
   return (
     <div className="flex items-center gap-3">
       <Button
         onClick={handleSync}
-        disabled={status === "loading"}
+        disabled={loading}
         variant={status === "error" ? "destructive" : "default"}
       >
-        {status === "loading" ? "Starting sync..." : "Run Sync Now"}
+        {loading ? "Running sync… (can take a few minutes)" : "Run Sync Now"}
       </Button>
       {message && (
         <span
