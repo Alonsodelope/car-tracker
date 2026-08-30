@@ -64,6 +64,16 @@ export interface VehicleProfile {
    */
   visorModel?: string;
   /**
+   * Exact Visor trim/version values to filter to, sent as the API's own
+   * `trim` query param (server-side, exact match — NOT a substring filter
+   * like trimFilter). Required whenever visorModel is broader than the
+   * vehicle itself (e.g. model "C-Class" covers C300/C43/C63 S/etc) —
+   * without this, every listing in that model family would be pulled in
+   * and mislabeled. Get exact values by searching the model on visor.vin
+   * and reading the trim facet list (see visor.ts for how these are used).
+   */
+  visorTrims?: string[];
+  /**
    * Visor.vin API calls are paid per-request (see api.visor.vin/api pricing).
    * Opt in per-vehicle rather than enabling it tracker-wide — set true only
    * for profiles where the extra coverage is worth the cost.
@@ -184,6 +194,12 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     // make=Mercedes-Benz, model=C-Class, with 25 nationwide 2025-2026 (current-gen
     // C63 S / C63 S E Performance) listings, all body_type=Sedan.
     visorModel: "C-Class",
+    // Exact trim values from Visor's own facet list for this model (confirmed
+    // live on visor.vin — searching "63 S" under C-Class trims returned exactly
+    // these three, 26+25+18 = 69 listings, all of them the current-gen sedan).
+    // Sent as the API's own `trim` param so filtering happens server-side —
+    // critical here because visorModel "C-Class" also covers C300/C43/etc.
+    visorTrims: ["AMG® C63 S", "AMG C63 S E Peformance", "AMG C63 S"],
     // Visor API calls cost money per request (see visor.ts) — enabled only for
     // this vehicle, at the user's request, since it's the one filling the
     // cars.com gap. Do not enable tracker-wide without asking first.

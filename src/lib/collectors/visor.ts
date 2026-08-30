@@ -86,6 +86,12 @@ export class VisorCollector implements CollectorAdapter {
       if (this.profile.maxPrice) {
         params.set("max_price", String(this.profile.maxPrice));
       }
+      // Exact server-side trim filter. Required whenever visorModel names a
+      // broader family than the vehicle itself (e.g. "C-Class" covers every
+      // C-Class trim) — without this every listing in that family comes back.
+      if (this.profile.visorTrims?.length) {
+        params.set("trim", this.profile.visorTrims.join(","));
+      }
 
       const url = `${API_BASE}/listings?${params.toString()}`;
       console.log(`[visor:${this.profile.key}] Fetching offset ${offset}: ${url}`);
@@ -140,13 +146,20 @@ export class VisorCollector implements CollectorAdapter {
     if (!item.vdp_url) return null;
 
     const trim = item.trim ?? undefined;
-    const title = `${item.year ?? ""} ${this.profile.makeDisplay} ${this.profile.modelDisplay}${trim ? " " + trim : ""}`.trim();
-    // Include version + body_type in the matchable text — Visor's "trim" field
-    // is sometimes narrower than what our substring filters expect (e.g. the
-    // C63 S E Performance shows up with version "AMG C63 S E Peformance 4MATIC").
-    const matchableText = `${title} ${item.version ?? ""} ${item.body_type ?? ""}`;
+    // IMPORTANT: this matchable text must be built ONLY from Visor's own data
+    // about THIS listing (trim/version/body_type). It must never include our
+    // profile's display strings (makeDisplay/modelDisplay) — those describe
+    // the vehicle we WANT, not the listing we got, and splicing them in here
+    // previously made every listing in a broad model family (e.g. all of
+    // "C-Class") match regardless of its actual trim.
+    const matchableText = `${trim ?? ""} ${item.version ?? ""} ${item.body_type ?? ""}`;
 
-    if (this.profile.trimFilter) {
+    // When visorTrims is set, filtering already happened server-side via the
+    // API's exact-match `trim` param — skip the generic substring trimFilter,
+    // since it's tuned for other sources' title formats (e.g. "c 63" assumes
+    // a space that Visor's own trim strings like "AMG C63 S" don't have) and
+    // would wrongly reject good results here.
+    if (!this.profile.visorTrims?.length && this.profile.trimFilter) {
       if (!matchesTrimFilter(this.profile.trimFilter, trim, matchableText)) {
         return null;
       }
@@ -157,6 +170,8 @@ export class VisorCollector implements CollectorAdapter {
         return null;
       }
     }
+
+    const title = `${item.year ?? ""} ${this.profile.makeDisplay} ${this.profile.modelDisplay}${trim ? " " + trim : ""}`.trim();
 
     const location = item.city && item.state ? `${item.city}, ${item.state}` : undefined;
 
