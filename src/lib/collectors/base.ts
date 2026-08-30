@@ -63,6 +63,12 @@ export interface VehicleProfile {
    * "SL-Class").
    */
   visorModel?: string;
+  /**
+   * Visor.vin API calls are paid per-request (see api.visor.vin/api pricing).
+   * Opt in per-vehicle rather than enabling it tracker-wide — set true only
+   * for profiles where the extra coverage is worth the cost.
+   */
+  useVisor?: boolean;
 }
 
 export const VEHICLE_PROFILES: VehicleProfile[] = [
@@ -141,8 +147,6 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     modelCodeFilter: "SL",
     carsComMake: "mercedes_benz",
     carsComModel: "sl_class",
-    // Visor's model family for this chassis is "SL-Class" — "SL 600" is a trim/version there.
-    visorModel: "SL-Class",
   },
   {
     key: "mercedes-c63s-w206",
@@ -180,6 +184,10 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     // make=Mercedes-Benz, model=C-Class, with 25 nationwide 2025-2026 (current-gen
     // C63 S / C63 S E Performance) listings, all body_type=Sedan.
     visorModel: "C-Class",
+    // Visor API calls cost money per request (see visor.ts) — enabled only for
+    // this vehicle, at the user's request, since it's the one filling the
+    // cars.com gap. Do not enable tracker-wide without asking first.
+    useVisor: true,
   },
 ];
 

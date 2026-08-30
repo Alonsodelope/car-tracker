@@ -20,12 +20,16 @@ import type { SyncResult } from "@/types";
 // ─── Collectors registry — one set per vehicle profile ────────────────────────
 
 function buildCollectors(profile: VehicleProfile): CollectorAdapter[] {
-  return [
+  const collectors: CollectorAdapter[] = [
     new CarsComCollector(profile),
     new AutotraderCollector(profile),
     new BATCollector(profile),
-    new VisorCollector(profile),
   ];
+  // Visor is paid per-request — only run it for profiles that opt in.
+  if (profile.useVisor) {
+    collectors.push(new VisorCollector(profile));
+  }
+  return collectors;
 }
 
 // ─── Main sync entry point ────────────────────────────────────────────────────
