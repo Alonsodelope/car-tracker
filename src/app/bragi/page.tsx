@@ -20,6 +20,19 @@ function money(n: number | null | undefined): string {
   return `$${Math.round(n).toLocaleString()}`;
 }
 
+// Autotrader's trim is a short suffix (e.g. "S"), while Visor's trim already
+// spells out the full name (e.g. "AMG® C63 S E Peformance", typo and all).
+// Normalize both into "Mercedes-AMG <trim>" without a doubled "AMG" or the
+// source's typo.
+function formatTitle(year: number | null, trim: string | null, fallback: string | null): string {
+  if (!trim) return fallback ?? "";
+  const cleaned = trim
+    .replace(/Peformance/gi, "Performance")
+    .replace(/^AMG®?\s*/i, "")
+    .trim();
+  return `${year ?? ""} Mercedes-AMG ${cleaned || "C 63 S"}`.trim();
+}
+
 export default async function BragiPage() {
   const profile = getProfile(VEHICLE_KEY);
 
@@ -158,7 +171,7 @@ export default async function BragiPage() {
                     </span>
                   </div>
                   <p className="text-sm font-medium text-white/90 leading-snug mb-1">
-                    {l.year} {l.trim ? `Mercedes-AMG ${l.trim}` : l.title}
+                    {formatTitle(l.year, l.trim, l.title)}
                   </p>
                   <p className="text-2xl font-black mb-3" style={{ color: "#ffb454" }}>
                     {money(l.askingPrice)}
