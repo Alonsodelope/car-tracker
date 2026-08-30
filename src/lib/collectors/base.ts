@@ -132,13 +132,20 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     displayName: "Mercedes-AMG C 63 S E Performance",
     shortName: "AMG C63 S",
     make: "mercedes-benz",
-    model: "c-class",
+    // Autotrader has a dedicated model page for this exact variant
+    // (autotrader.com/cars-for-sale/mercedes-benz/c-63-amg/...) — searching
+    // the generic "c-class" model (1,100+ listings, mostly C300/C43) meant
+    // our 500-listing/20-page scan cap never reached most of the C63s
+    // buried further into the results. Searching "c-63-amg" directly finds
+    // all of them (17 nationwide vs. the 5 the c-class search surfaced).
+    model: "c-63-amg",
     makeDisplay: "Mercedes-Benz",
     modelDisplay: "C 63 AMG S",
     yearMin: 2024,
-    yearMax: 2025,
+    yearMax: 2026,
     stockType: "used",
     // Matches "AMG C 63 S ..." trims, excludes regular C300/C300 4MATIC etc.
+    // Kept as a safety net now that the URL itself is already scoped to C63.
     trimFilter: "c 63",
     // Autotrader's model.code for Mercedes lines is the short series letter
     // (see SL 600 above, which needed "SL" instead of "SL-CLASS") — for
