@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandName } from "@/components/BrandName";
 
 export default function DashboardGroupLayout({
   children,
@@ -22,9 +23,7 @@ export default function DashboardGroupLayout({
               </div>
             </div>
             <div>
-              <Link href="/" className="text-sm font-semibold text-foreground hover:text-primary transition-colors tracking-tight">
-                Car Tracker
-              </Link>
+              <BrandName />
               <div className="flex items-center gap-1.5 mt-0.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 live-dot" />
                 <p className="text-[10px] text-muted-foreground tracking-wide uppercase">
