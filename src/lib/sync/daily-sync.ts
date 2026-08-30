@@ -11,6 +11,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { CarsComCollector } from "../collectors/cars-com";
 import { AutotraderCollector } from "../collectors/autotrader";
 import { BATCollector } from "../collectors/bat";
+import { VisorCollector } from "../collectors/visor";
 import { VEHICLE_PROFILES, VehicleProfile } from "../collectors/base";
 import type { CollectorAdapter, ScrapedListing } from "../collectors/base";
 import { format } from "date-fns";
@@ -23,6 +24,7 @@ function buildCollectors(profile: VehicleProfile): CollectorAdapter[] {
     new CarsComCollector(profile),
     new AutotraderCollector(profile),
     new BATCollector(profile),
+    new VisorCollector(profile),
   ];
 }
 
@@ -277,6 +279,7 @@ async function ensureSource(name: string) {
     "cars.com": "https://www.cars.com",
     autotrader: "https://www.autotrader.com",
     bringatrailer: "https://bringatrailer.com",
+    visor: "https://visor.vin",
   };
 
   const [created] = await db

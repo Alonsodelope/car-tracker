@@ -48,6 +48,21 @@ export interface VehicleProfile {
    * differently-bodied variant sharing the same trim name.
    */
   excludeKeywords?: string[];
+  /**
+   * Visor.vin API make override. Visor's `make`/`model` params identify the
+   * model FAMILY (not a trim-specific display name) — e.g. for the C63 S,
+   * Visor's model is "C-Class" even though modelDisplay is "C 63 AMG S".
+   * Defaults to makeDisplay if omitted.
+   */
+  visorMake?: string;
+  /**
+   * Visor.vin API model override — see visorMake. Defaults to modelDisplay
+   * if omitted, which is correct for most profiles (e.g. "M2", "911",
+   * "Bronco") but wrong for ones where modelDisplay is actually a trim of a
+   * broader model family (e.g. "C 63 AMG S" → "C-Class", "SL 600" →
+   * "SL-Class").
+   */
+  visorModel?: string;
 }
 
 export const VEHICLE_PROFILES: VehicleProfile[] = [
@@ -126,6 +141,8 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     modelCodeFilter: "SL",
     carsComMake: "mercedes_benz",
     carsComModel: "sl_class",
+    // Visor's model family for this chassis is "SL-Class" — "SL 600" is a trim/version there.
+    visorModel: "SL-Class",
   },
   {
     key: "mercedes-c63s-w206",
@@ -158,6 +175,11 @@ export const VEHICLE_PROFILES: VehicleProfile[] = [
     excludeKeywords: ["coupe", "cabriolet", "convertible", "wagon", "estate"],
     carsComMake: "mercedes_benz",
     carsComModel: "c_class",
+    // Visor's model family for this chassis is "C-Class" — "C 63 AMG S" is a trim/version there.
+    // Confirmed live on visor.vin: searching "Mercedes-AMG C 63 S" resolves to
+    // make=Mercedes-Benz, model=C-Class, with 25 nationwide 2025-2026 (current-gen
+    // C63 S / C63 S E Performance) listings, all body_type=Sedan.
+    visorModel: "C-Class",
   },
 ];
 
