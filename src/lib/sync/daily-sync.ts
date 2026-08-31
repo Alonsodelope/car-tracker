@@ -35,13 +35,21 @@ function buildCollectors(profile: VehicleProfile): CollectorAdapter[] {
 
 // ─── Main sync entry point ────────────────────────────────────────────────────
 
-export async function runDailySync(): Promise<SyncResult[]> {
+export async function runDailySync(vehicleKeys?: string[]): Promise<SyncResult[]> {
   const today = format(new Date(), "yyyy-MM-dd");
-  console.log(`\n═══ Daily Sync — ${today} ═══\n`);
+  const profiles = vehicleKeys?.length
+    ? VEHICLE_PROFILES.filter((p) => vehicleKeys.includes(p.key))
+    : VEHICLE_PROFILES;
+
+  console.log(
+    vehicleKeys?.length
+      ? `\n═══ Sync — ${today} (${profiles.map((p) => p.key).join(", ")}) ═══\n`
+      : `\n═══ Daily Sync — ${today} ═══\n`
+  );
 
   const results: SyncResult[] = [];
 
-  for (const profile of VEHICLE_PROFILES) {
+  for (const profile of profiles) {
     console.log(`\n─── Vehicle: ${profile.displayName} ───`);
     const collectors = buildCollectors(profile);
     for (const collector of collectors) {

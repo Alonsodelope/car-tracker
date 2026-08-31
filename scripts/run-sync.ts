@@ -1,12 +1,16 @@
 /**
  * One-shot sync runner. Runs all collectors and exits.
  * Run: pnpm sync
+ * Or, to sync only specific vehicles: pnpm sync -- bmw-m2 mercedes-c63s-w206
+ * (matches VehicleProfile.key in src/lib/collectors/base.ts)
  */
 
 import "dotenv/config";
 import { runDailySync } from "../src/lib/sync/daily-sync";
 
-runDailySync()
+const vehicleKeys = process.argv.slice(2).filter(Boolean);
+
+runDailySync(vehicleKeys.length ? vehicleKeys : undefined)
   .then((results) => {
     console.log("\nSync results:");
     for (const r of results) {

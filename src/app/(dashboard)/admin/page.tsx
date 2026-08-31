@@ -48,8 +48,9 @@ export default async function AdminPage() {
         <div className="p-6">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-4">Manual Sync</p>
           <p className="text-sm text-muted-foreground mb-4">
-            The daily sync runs automatically at 8:00 AM via the cron process.
-            Use this button to trigger an immediate data collection from all sources.
+            BMW M2 and AMG C63 S sync automatically every 48 hours (see .github/workflows/daily-sync.yml).
+            The other 4 vehicles are frozen at their current data and are not synced automatically.
+            Use this button to trigger an immediate data collection from all sources, for every vehicle.
           </p>
           <SyncButton />
           <p className="text-xs text-muted-foreground/60 mt-3">
