@@ -1,10 +1,22 @@
-name: Daily Data Sync
+name: M2 & C63 S Sync (every 48h)
+
+# Only syncs bmw-m2 and mercedes-c63s-w206 (the /bragi link), every 48 hours,
+# per the user's request — the other 4 tracked vehicles are intentionally
+# left frozen at their current data and are not touched by this workflow.
+# (A full sync of every vehicle is still available on demand from the
+# Admin page's "Run Sync Now" button.)
 
 on:
   schedule:
-    # Runs every day at 10:00 AM Eastern Time (14:00 UTC)
-    - cron: "0 14 * * *"
+    # Every other day at 14:00 UTC (10:00 AM Eastern). Cron has no native
+    # "every 48 hours" — day-of-month step is the standard approximation.
+    - cron: "0 14 */2 * *"
   workflow_dispatch: # Allow manual trigger from GitHub UI
+    inputs:
+      vehicle_keys:
+        description: "Space-separated vehicle keys to sync (default: bmw-m2 mercedes-c63s-w206)"
+        required: false
+        default: "bmw-m2 mercedes-c63s-w206"
 
 jobs:
   sync:
@@ -28,12 +40,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run daily sync
+      - name: Run sync (bmw-m2, mercedes-c63s-w206 only)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SYNC_SECRET_TOKEN: ${{ secrets.SYNC_SECRET_TOKEN }}
-        run: pnpm sync
+        run: pnpm sync -- ${{ github.event.inputs.vehicle_keys || 'bmw-m2 mercedes-c63s-w206' }}
 
       - name: Notify on failure
         if: failure()
-        run: echo "Daily sync failed. Check the logs above."
+        run: echo "Sync failed. Check the logs above."
