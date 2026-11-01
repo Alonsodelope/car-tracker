@@ -17,6 +17,7 @@ import {
 import type { DailyMarketSummary, Listing } from "@/lib/db/schema";
 import { enrichListingsWithDealStatus } from "@/lib/market/fair-value";
 import { format, parseISO } from "date-fns";
+import { useState, useMemo } from "react";
 import { PriceMileageChart } from "./PriceMileageChart";
 
 interface PriceTrendsProps {
@@ -71,17 +72,77 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
+type Granularity = "monthly" | "daily";
+
+type TrendPoint = {
+  date: string;
+  avgPrice: number | null;
+  medianPrice: number | null;
+  totalActive: number | null;
+  newListings: number | null;
+  removedListings: number | null;
+};
+
+const num = (v: unknown) => (v == null ? null : parseFloat(String(v)));
+const mean = (xs: (number | null)[]) => {
+  const v = xs.filter((x): x is number => x != null && !Number.isNaN(x));
+  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+};
+const sum = (xs: (number | null)[]) => {
+  const v = xs.filter((x): x is number => x != null);
+  return v.length ? v.reduce((a, b) => a + b, 0) : null;
+};
+
+// Groups daily summaries by calendar month.
+// Prices & inventory = average of the days tracked that month; new/removed = totals.
+function toMonthly(days: DailyMarketSummary[]): TrendPoint[] {
+  const byMonth = new Map<string, DailyMarketSummary[]>();
+  for (const d of days) {
+    const k = d.summaryDate.slice(0, 7);
+    if (!byMonth.has(k)) byMonth.set(k, []);
+    byMonth.get(k)!.push(d);
+  }
+  return [...byMonth.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, rows]) => {
+      const r = (v: number | null) => (v == null ? null : Math.round(v));
+      return {
+        date: format(parseISO(k + "-01T12:00:00"), "MMM yyyy"),
+        avgPrice: r(mean(rows.map((d) => num(d.avgPrice)))),
+        medianPrice: r(mean(rows.map((d) => num(d.medianPrice)))),
+        totalActive: r(mean(rows.map((d) => d.totalActive))),
+        newListings: sum(rows.map((d) => d.newListings)),
+        removedListings: sum(rows.map((d) => d.removedListings)),
+      };
+    });
+}
+
 export function PriceTrends({ history, activeListings, vehicleKey }: PriceTrendsProps) {
-  const sorted = [...history]
-    .sort((a, b) => a.summaryDate.localeCompare(b.summaryDate))
-    .map((d) => ({
-      date: fmtDate(d.summaryDate),
-      avgPrice: d.avgPrice ? Math.round(parseFloat(String(d.avgPrice))) : null,
-      medianPrice: d.medianPrice ? Math.round(parseFloat(String(d.medianPrice))) : null,
-      totalActive: d.totalActive,
-      newListings: d.newListings,
-      removedListings: d.removedListings,
-    }));
+  const [granularity, setGranularity] = useState<Granularity>("monthly");
+
+  const ordered = useMemo(
+    () => [...history].sort((a, b) => a.summaryDate.localeCompare(b.summaryDate)),
+    [history]
+  );
+
+  const sorted: TrendPoint[] = useMemo(
+    () =>
+      granularity === "monthly"
+        ? toMonthly(ordered)
+        : ordered.map((d) => ({
+            date: fmtDate(d.summaryDate),
+            avgPrice: d.avgPrice ? Math.round(parseFloat(String(d.avgPrice))) : null,
+            medianPrice: d.medianPrice ? Math.round(parseFloat(String(d.medianPrice))) : null,
+            totalActive: d.totalActive,
+            newListings: d.newListings,
+            removedListings: d.removedListings,
+          })),
+    [ordered, granularity]
+  );
+
+  const sinceLabel = ordered[0]
+    ? format(parseISO(ordered[0].summaryDate + "T12:00:00"), "MMM d, yyyy")
+    : null;
 
   const enriched = enrichListingsWithDealStatus(activeListings);
   const toPoint = (l: typeof enriched[number]) => ({
@@ -108,7 +169,24 @@ export function PriceTrends({ history, activeListings, vehicleKey }: PriceTrends
       <div className="flex items-center gap-3 mb-5">
         <h2 className="text-base font-semibold text-foreground tracking-tight">Price Trends</h2>
         <div className="flex-1 h-px bg-border/60" />
-        <span className="text-xs text-muted-foreground">{sorted.length} days</span>
+        <span className="text-xs text-muted-foreground">
+          {sinceLabel ? `Since ${sinceLabel} · ` : ""}
+          {sorted.length} {granularity === "monthly" ? (sorted.length === 1 ? "month" : "months") : "days"}
+        </span>
+        <div className="inline-flex rounded-lg border border-border p-0.5 text-xs">
+          {(["monthly", "daily"] as const).map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => setGranularity(g)}
+              className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                granularity === g ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {g === "monthly" ? "Monthly" : "Daily"}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -128,7 +206,7 @@ export function PriceTrends({ history, activeListings, vehicleKey }: PriceTrends
         </ChartCard>
 
         {/* Inventory */}
-        <ChartCard title="Inventory Count">
+        <ChartCard title={granularity === "monthly" ? "Inventory Count (monthly avg)" : "Inventory Count"}>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={sorted}>
               <defs>
@@ -147,7 +225,7 @@ export function PriceTrends({ history, activeListings, vehicleKey }: PriceTrends
         </ChartCard>
 
         {/* Daily activity */}
-        <ChartCard title="Daily Listing Activity">
+        <ChartCard title={granularity === "monthly" ? "Monthly Listing Activity" : "Daily Listing Activity"}>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={sorted} barGap={2}>
               <CartesianGrid strokeDasharray="2 4" vertical={false} />

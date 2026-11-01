@@ -23,8 +23,7 @@ export default async function DashboardPage({
     .select()
     .from(dailyMarketSummary)
     .where(eq(dailyMarketSummary.vehicleKey, profile.key))
-    .orderBy(desc(dailyMarketSummary.summaryDate))
-    .limit(60);
+    .orderBy(desc(dailyMarketSummary.summaryDate));
 
   const todaySummary = summaryHistory[0] ?? null;
   const yesterdaySummary = summaryHistory[1] ?? null;
